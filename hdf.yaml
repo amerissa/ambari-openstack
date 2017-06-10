@@ -1,0 +1,121 @@
+heat_template_version: 2016-04-08
+description: Simple template to deploy a 3 node Nifi Cluster
+parameters:
+  ClusterName:
+    type: string
+    label: Cluster Name
+    description: Name of the cluster, it will also be the prefix of the hostname ie amer-1, amer-2
+    default: amer
+  SlaveCount:
+    type: string
+    label: Number of Slaves
+    description: Number of nifi slaves to spin up
+    default: 2
+  KeyName:
+      type: string
+      label: Key Name
+      description: Key Name for access
+      default: aissa
+  ImageID:
+    type: string
+    label: Image ID
+    description: AMI Image ID
+    default: c5203927-459b-465d-aa77-19615b51c27f
+  InstanceType:
+    type: string
+    label: Instance Type
+    description: Type of flavour
+    constraints:
+      - allowed_values: [m3.medium, m3.large, m3.xlarge]
+    default: m3.medium
+  DatabasePassword:
+    type: string
+    label: Postgres Database Password
+    default: bigdata
+resources:
+  AmbariMaster:
+    type: OS::Nova::Server
+    properties:
+      name:
+        list_join: ['-', [{get_param: ClusterName}, 'mstr' ]]
+      flavor: { get_param: InstanceType }
+      availability_zone: SE
+      admin_pass: "bigdata"
+      image: { get_param: ImageID }
+      key_name: { get_param: KeyName }
+      security_groups: [default]
+      networks: [{"network": PROVIDER_NET_172.26.192.0/18}]
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash
+            #setup yum and install packages
+            curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.4.2.0/ambari.repo -o /etc/yum.repos.d/ambari.repo
+            yum -y install postgresql postgresql-server ambari-server ambari-agent
+
+            # Setup Psql server
+            service postgresql initdb
+            sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /var/lib/pgsql/data/postgresql.conf
+            echo "host    all             all             0.0.0.0/0            md5" >> /var/lib/pgsql/data/pg_hba.conf
+            service postgresql start
+
+            #Create Sql Database
+            su - postgres -c "psql -c \"create role ambari with login password '$dbpasswd$';\""
+            su - postgres -c "psql -c \"create database ambari with owner ambari;\""
+            echo "*:*:*:ambari:$dbpasswd$" > ~/.pgpass
+            chmod 600 ~/.pgpass
+            psql -U ambari -h $(hostname -f) ambari -c "CREATE SCHEMA ambari; alter role ambari set search_path to 'ambari', 'public'"
+            cat /var/lib/ambari-server/resources/Ambari-DDL-Postgres-CREATE.sql | psql -U ambari -h $(hostname -f) ambari
+
+            #Ambari Setup
+            yum -y install mlocate; updatedb
+            jdbc=`locate postgresql | grep .jar`
+            ambari-server setup --jdbc-driver=/usr/lib/ambari-server/postgresql-9.3-1101-jdbc4.jar --jdbc-db=postgres
+            ambari-server setup --silent --databasehost=$(hostname -f) --database=postgres --databaseport=5432 --databasename=ambari --databaseusername=ambari --databasepassword=$dbpasswd$
+            echo -e yes\\n | ambari-server install-mpack --mpack=http://public-repo-1.hortonworks.com/HDF/centos7/2.x/updates/2.1.2.0/tars/hdf_ambari_mp/hdf-ambari-mpack-2.1.2.0-10.tar.gz --purge
+            service ambari-server start
+
+            sed -i "s/hostname=localhost/hostname=$(hostname -f)/g" /etc/ambari-agent/conf/ambari-agent.ini
+            until curl -s -H "X-Requested-By: ambari" -u admin:admin http://$ambariserver$:8080 | grep -qi Ambari; do echo Waiting for Ambari-server; sleep 30; done
+            curl -H "X-Requested-By: ambari" -X POST -u admin:admin http://$(hostname -f):8080/api/v1/blueprints/nifi -d '{  "Blueprints": {     "stack_name": "HDF",     "stack_version": "2.1"   },   "host_groups": [     {       "name": "master",       "components": [         {           "name": "NIFI_MASTER"         }, 	{           "name": "NIFI_CA"         }, 	{           "name": "ZOOKEEPER_SERVER"         }          ] },     {       "name": "nifiserver",       "components": [{           "name": "NIFI_MASTER"         }  ] }  ],   "configurations": [     {       "nifi-ambari-config": {                 "nifi.security.encrypt.configuration.password": "changemeplease"       }     }   ] }'
+            curl -H "X-Requested-By: ambari" -X POST -u admin:admin http://$(hostname -f):8080/api/v1/clusters/$cluster$ -d '{"blueprint" : "nifi", "default_password" : "admin", "host_groups" :[{"name" : "master", "hosts" : [{"fqdn" : "'"$(hostname)*"'"}]}]}'
+            service ambari-agent start
+
+          params:
+            $dbpasswd$: {get_param: DatabasePassword}
+            $cluster$: {get_param: ClusterName}
+
+  NiFi:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: {get_param: SlaveCount}
+      resource_def:
+        type: OS::Nova::Server
+        properties:
+          name:
+            list_join: ['-', [{get_param: ClusterName}, '%index%' ]]
+          availability_zone: SE
+          flavor: { get_param: InstanceType }
+          admin_pass: "bigdata"
+          image: { get_param: ImageID }
+          key_name: { get_param: KeyName }
+          security_groups: [default]
+          networks: [{"network": PROVIDER_NET_172.26.192.0/18}]
+          user_data:
+            str_replace:
+              template: |
+                #!/bin/bash
+                curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.4.2.0/ambari.repo -o /etc/yum.repos.d/ambari.repo
+                yum -y install ambari-agent
+                server=$ambariserver$.field.hortonworks.com
+                sed -i "s/hostname=localhost/hostname=$server/g" /etc/ambari-agent/conf/ambari-agent.ini
+                until curl -s -H "X-Requested-By: ambari" -u admin:admin http://$ambariserver$:8080/api/v1/clusters | grep -q $cluster$; do echo Waiting for Ambari-server; sleep 30; done
+                chmod +x /var/lib/ambari-agent/hostname.sh
+                service ambari-agent start
+                until cat /var/log/ambari-agent/ambari-agent.log | grep -q "Connected to Ambari server"; do sleep 15; done
+                servername=`curl -s -H "X-Requested-By: ambari"  http://$ambariserver$:8080/api/v1/hosts -u admin:admin | grep host_name | grep $(hostname) | cut -d ":" -f 2 | sed 's/[ "]//g'`
+                curl -H "X-Requested-By: ambari" -X POST -u admin:admin -d '{ "blueprint" : "nifi", "host_group" : "nifiserver" }' http://$ambariserver$:8080/api/v1/clusters/$cluster$/hosts/$servername
+              params:
+                $ambariserver$: { get_attr: [AmbariMaster, name] }
+                $cluster$: {get_param: ClusterName}
+    depends_on: AmbariMaster

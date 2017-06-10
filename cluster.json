@@ -1,0 +1,66 @@
+{
+ "blueprint" : "hdptest",
+ "default_password" : "DBPASSWD",
+ "host_groups" :[
+{
+ "name" : "master-1",
+ "hosts" : [
+ {
+ "fqdn" : "master1"
+ }
+ ]
+ },
+{
+ "name" : "master-2",
+ "hosts" : [
+ {
+ "fqdn" : "master2"
+ }
+ ]
+ },
+{
+ "name" : "master-3",
+ "hosts" : [
+ {
+ "fqdn" : "master3"
+ }
+ ]
+ }
+ ],
+ "credentials" : [
+     {
+       "alias" : "kdc.admin.credential",
+       "principal" : "ambari/admin@HORTONWORKS.COM",
+       "key" : "ambari",
+       "type" : "PERSISTED"
+     },
+     {
+       "alias" : "ranger.ks.jdbc.password",
+       "key" : "DBPASSWD",
+       "principal" : "db_passwd",
+       "type" : "PERSISTED"
+     },
+     {
+       "alias" : "ranger.ks.hsm.partition.password.alias",
+       "key" : "DBPASSWD",
+       "principal" : "db_passwd",
+       "type" : "PERSISTED"
+     },
+     {
+       "alias" : "keyStoreCredentialAlias",
+       "key" : "DBPASSWD",
+       "principal" : "db_passwd",
+       "type" : "PERSISTED"
+     },
+     {
+       "alias" : "ranger.ks.masterkey.password",
+       "key" : "DBPASSWD",
+       "principal" : "db_passwd",
+       "type" : "PERSISTED"
+     }
+ ],
+ "security" : {
+    "type" : "KERBEROS"
+}
+}
+

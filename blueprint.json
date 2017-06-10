@@ -1,0 +1,879 @@
+{
+ "configurations" : [
+ {
+  "ranger-hdfs-policymgr-ssl": {
+    "properties_attributes": {},
+    "properties": {
+      "xasecure.policymgr.clientssl.truststore": "/etc/pki/hadoop/truststore.jks",
+      "xasecure.policymgr.clientssl.truststore.password": "DBPASSWD",
+      "xasecure.policymgr.clientssl.keystore.password": "DBPASSWD",
+      "xasecure.policymgr.clientssl.keystore": "/etc/pki/hadoop/server.jks",
+      "xasecure.policymgr.clientssl.keystore.credential.file": "jceks://file{{credential_file}}",
+      "xasecure.policymgr.clientssl.truststore.credential.file": "jceks://file{{credential_file}}"
+    }
+  }
+},
+{
+  "tagsync-application-properties": {
+    "properties_attributes": {},
+    "properties": {
+      "atlas.kafka.security.protocol": "PLAINTEXTSASL",
+      "atlas.jaas.KafkaClient.option.useKeyTab": "true",
+      "atlas.kafka.entities.group.id": "ranger_entities_consumer",
+      "atlas.jaas.KafkaClient.option.keyTab": "/etc/security/keytabs/rangertagsync.service.keytab",
+      "atlas.jaas.KafkaClient.loginModuleName": "com.sun.security.auth.module.Krb5LoginModule",
+      "atlas.jaas.KafkaClient.option.principal": "rangertagsync/_HOST@HORTONWORKS.COM",
+      "atlas.jaas.KafkaClient.option.serviceName": "kafka",
+      "atlas.jaas.KafkaClient.option.storeKey": "true",
+      "atlas.jaas.KafkaClient.loginModuleControlFlag": "required",
+      "atlas.kafka.sasl.kerberos.service.name": "kafka",
+      "atlas.kafka.bootstrap.servers": "localhost:6667",
+      "atlas.kafka.zookeeper.connect": "master2:2181,master3:2181,master1:2181"
+    }
+  }
+},
+    {
+      "kms-env" : {
+        "properties_attributes" : { },
+        "properties" : {
+          "kms_group" : "kms",
+          "create_db_user" : "false",
+          "kms_log_dir" : "/var/log/ranger/kms",
+          "kms_user" : "kms",
+          "ranger_kms_pid_dir" : "/var/run/ranger_kms",
+          "kms_port" : "9292"
+        }
+      }
+    },
+{
+  "ranger-yarn-policymgr-ssl": {
+    "properties_attributes": {},
+    "properties": {
+      "xasecure.policymgr.clientssl.truststore": "/etc/pki/hadoop/truststore.jks",
+      "xasecure.policymgr.clientssl.keystore": "/etc/pki/hadoop/server.jks",
+      "xasecure.policymgr.clientssl.truststore.password": "DBPASSWD",
+      "xasecure.policymgr.clientssl.keystore.password": "DBPASSWD",
+      "xasecure.policymgr.clientssl.keystore.credential.file": "jceks://file{{credential_file}}",
+      "xasecure.policymgr.clientssl.truststore.credential.file": "jceks://file{{credential_file}}"
+    }
+  }
+},
+{
+  "hiveserver2-site": {
+    "properties_attributes": {},
+    "properties": {
+      "hive.service.metrics.hadoop2.component": "hiveserver2",
+      "hive.security.authenticator.manager": "org.apache.hadoop.hive.ql.security.SessionStateUserAuthenticator",
+      "hive.security.authorization.enabled": "true",
+      "hive.conf.restricted.list": "hive.security.authorization.enabled,hive.security.authorization.manager,hive.security.authenticator.manager",
+      "hive.security.authorization.manager": "org.apache.ranger.authorization.hive.authorizer.RangerHiveAuthorizerFactory",
+      "hive.metastore.metrics.enabled": "true",
+      "hive.service.metrics.reporter": "JSON_FILE, JMX, HADOOP2",
+      "hive.service.metrics.file.location": "/var/log/hive/hiveserver2-report.json"
+    }
+  }
+},
+{
+  "ranger-hive-policymgr-ssl": {
+    "properties_attributes": {},
+    "properties": {
+      "xasecure.policymgr.clientssl.truststore": "/etc/pki/hadoop/truststore.jks",
+      "xasecure.policymgr.clientssl.keystore": "/etc/pki/hadoop/server.jks",
+      "xasecure.policymgr.clientssl.truststore.password": "DBPASSWD",
+      "xasecure.policymgr.clientssl.keystore.password": "DBPASSWD",
+      "xasecure.policymgr.clientssl.keystore.credential.file": "jceks://file{{credential_file}}",
+      "xasecure.policymgr.clientssl.truststore.credential.file": "jceks://file{{credential_file}}"
+    }
+  }
+},
+{
+  "admin-properties": {
+    "properties_attributes": {},
+    "properties": {
+      "DB_FLAVOR": "POSTGRES",
+      "db_name": "ranger",
+      "policymgr_external_url": "https://master2:6182",
+      "db_user": "ambari",
+      "db_password": "DBPASSWD",
+      "SQL_CONNECTOR_JAR": "{{driver_curl_target}}",
+      "db_host": "master1"
+    }
+  }
+},
+    {
+      "ranger-env" : {
+        "properties_attributes" : { },
+        "properties" : {
+          "ranger_user" : "ranger",
+          "ranger-hdfs-plugin-enabled" : "Yes",
+          "ranger-hbase-plugin-enabled" : "No",
+          "ranger-hive-plugin-enabled" : "Yes",
+          "ranger-knox-plugin-enabled" : "No",
+          "ranger-yarn-plugin-enabled" : "Yes",
+          "ranger-atlas-plugin-enabled" : "No",
+          "ranger-storm-plugin-enabled" : "No",
+          "ranger-kafka-plugin-enabled" : "No",
+          "ranger_group" : "ranger",
+          "ranger_admin_username" : "admin",
+          "ranger_admin_password" : "admin",
+          "xasecure.audit.destination.db" : "false",
+          "xasecure.audit.destination.solr" : "true",
+          "xasecure.audit.destination.hdfs" : "true",
+          "is_solrCloud_enabled": "true"
+        }
+      }
+    },
+{
+   "ranger-hive-plugin-properties": {
+     "properties_attributes": {},
+     "properties": {
+       "REPOSITORY_CONFIG_USERNAME": "hive",
+       "jdbc.driverClassName": "org.apache.hive.jdbc.HiveDriver",
+       "common.name.for.certificate": "master2",
+       "policy_user": "ambari-qa"
+     }
+   }
+ },
+    {
+      "ranger-yarn-plugin-properties" : {
+        "properties_attributes" : { },
+        "properties" : {
+          "REPOSITORY_CONFIG_USERNAME" : "yarn",
+          "common.name.for.certificate" : "master2",
+          "ranger-yarn-plugin-enabled" : "Yes",
+          "policy_user" : "ambari-qa",
+          "hadoop.rpc.protection" : "privacy"
+        }
+      }
+    },
+ {
+   "ranger-yarn-security": {
+     "properties_attributes": {},
+     "properties": {
+       "ranger.plugin.yarn.policy.rest.ssl.config.file": "/etc/hadoop/conf/ranger-policymgr-ssl-yarn.xml",
+       "ranger.plugin.yarn.policy.source.impl": "org.apache.ranger.admin.client.RangerAdminRESTClient",
+       "ranger.plugin.yarn.policy.cache.dir": "/etc/ranger/{{repo_name}}/policycache",
+       "ranger.plugin.yarn.policy.pollIntervalMs": "30000",
+       "ranger.plugin.yarn.policy.rest.url": "https://master2:6182",
+       "ranger.plugin.yarn.service.name": "{{repo_name}}"
+     }
+   }
+ },
+ {
+   "ranger-yarn-audit": {
+     "properties_attributes": {},
+     "properties": {
+       "xasecure.audit.destination.hdfs.batch.filespool.dir": "/var/log/hadoop/yarn/audit/hdfs/spool",
+       "xasecure.audit.is.enabled": "true",
+       "xasecure.audit.jaas.Client.option.keyTab": "/etc/security/keytabs/rm.service.keytab",
+       "xasecure.audit.destination.hdfs": "true",
+       "xasecure.audit.jaas.Client.loginModuleControlFlag": "required",
+       "xasecure.audit.jaas.Client.option.serviceName": "solr",
+       "xasecure.audit.jaas.Client.loginModuleName": "com.sun.security.auth.module.Krb5LoginModule",
+       "xasecure.audit.jaas.Client.option.useKeyTab": "true",
+       "xasecure.audit.destination.solr.batch.filespool.dir": "/var/log/hadoop/yarn/audit/solr/spool",
+       "xasecure.audit.destination.hdfs.dir": "hdfs://mycluster/ranger/audit",
+       "xasecure.audit.jaas.Client.option.principal": "rm/_HOST@HORTONWORKS.COM",
+       "xasecure.audit.destination.solr.force.use.inmemory.jaas.config": "true",
+       "xasecure.audit.destination.solr": "true",
+       "xasecure.audit.destination.solr.zookeepers": "master1:2181,master2:2181,master3:2181/infra-solr",
+       "xasecure.audit.provider.summary.enabled": "false",
+       "xasecure.audit.jaas.Client.option.storeKey": "false",
+       "xasecure.audit.destination.solr.urls": ""
+     }
+   }
+ },
+ {
+   "ranger-hive-audit": {
+     "properties_attributes": {},
+     "properties": {
+       "xasecure.audit.destination.hdfs.batch.filespool.dir": "/var/log/hive/audit/hdfs/spool",
+       "xasecure.audit.is.enabled": "true",
+       "xasecure.audit.jaas.Client.option.keyTab": "/etc/security/keytabs/hive.service.keytab",
+       "xasecure.audit.destination.hdfs": "true",
+       "xasecure.audit.jaas.Client.loginModuleControlFlag": "required",
+       "xasecure.audit.jaas.Client.option.serviceName": "solr",
+       "xasecure.audit.jaas.Client.loginModuleName": "com.sun.security.auth.module.Krb5LoginModule",
+       "xasecure.audit.jaas.Client.option.useKeyTab": "true",
+       "xasecure.audit.destination.solr.batch.filespool.dir": "/var/log/hive/audit/solr/spool",
+       "xasecure.audit.destination.hdfs.dir": "hdfs://mycluster/ranger/audit",
+       "xasecure.audit.jaas.Client.option.principal": "hive/_HOST@HORTONWORKS.COM",
+       "xasecure.audit.destination.solr.force.use.inmemory.jaas.config": "true",
+       "xasecure.audit.destination.solr": "true",
+       "xasecure.audit.destination.solr.zookeepers": "master1:2181,master2:2181,master3:2181/infra-solr",
+       "xasecure.audit.provider.summary.enabled": "false",
+       "xasecure.audit.jaas.Client.option.storeKey": "false",
+       "xasecure.audit.destination.solr.urls": ""
+     }
+   }
+ },
+ {
+   "ranger-hive-security": {
+     "properties_attributes": {},
+     "properties": {
+       "xasecure.hive.update.xapolicies.on.grant.revoke": "true",
+       "ranger.plugin.hive.policy.source.impl": "org.apache.ranger.admin.client.RangerAdminRESTClient",
+       "ranger.plugin.hive.policy.pollIntervalMs": "30000",
+       "ranger.plugin.hive.policy.rest.ssl.config.file": "/usr/hdp/current/{{ranger_hive_component}}/conf/conf.server/ranger-policymgr-ssl.xml",
+       "ranger.plugin.hive.policy.cache.dir": "/etc/ranger/{{repo_name}}/policycache",
+       "ranger.plugin.hive.service.name": "{{repo_name}}",
+       "ranger.plugin.hive.policy.rest.url": "https://master2:6182"
+     }
+   }
+ },
+
+ {
+   "ranger-kms-policymgr-ssl": {
+     "properties_attributes": {},
+     "properties": {
+       "xasecure.policymgr.clientssl.truststore": "/usr/hdp/current/ranger-kms/conf/ranger-plugin-truststore.jks",
+       "xasecure.policymgr.clientssl.keystore": "/usr/hdp/current/ranger-kms/conf/ranger-plugin-keystore.jks",
+       "xasecure.policymgr.clientssl.keystore.credential.file": "jceks://file{{credential_file}}",
+       "xasecure.policymgr.clientssl.truststore.password": "DBPASSWD",
+       "xasecure.policymgr.clientssl.keystore.password": "DBPASSWD",
+       "xasecure.policymgr.clientssl.truststore.credential.file": "jceks://file{{credential_file}}"
+     }
+   }
+ },
+ {
+  "ranger-hdfs-security": {
+    "properties_attributes": {},
+    "properties": {
+      "xasecure.add-hadoop-authorization": "true",
+      "ranger.plugin.hdfs.policy.rest.ssl.config.file": "/etc/hadoop/conf/ranger-policymgr-ssl.xml",
+      "ranger.plugin.hdfs.policy.source.impl": "org.apache.ranger.admin.client.RangerAdminRESTClient",
+      "ranger.plugin.hdfs.policy.cache.dir": "/etc/ranger/{{repo_name}}/policycache",
+      "ranger.plugin.hdfs.policy.pollIntervalMs": "30000",
+      "ranger.plugin.hdfs.service.name": "{{repo_name}}",
+      "ranger.plugin.hdfs.policy.rest.url": "https://master2:6182"
+    }
+  }
+},
+{
+  "kms-properties": {
+    "properties_attributes": {},
+    "properties": {
+      "DB_FLAVOR": "POSTGRES",
+      "db_name": "rangerkms",
+      "db_user": "ambari",
+      "create_db_user" : "no",
+      "KMS_MASTER_KEY_PASSWD" : "DBPASSWD",
+      "db_password" : "DBPASSWD",
+      "SQL_CONNECTOR_JAR": "{{driver_curl_target}}",
+      "REPOSITORY_CONFIG_USERNAME": "keyadmin",
+      "db_host": "master1"
+    }
+  }
+},
+{
+  "ranger-kms-security": {
+    "properties_attributes": {},
+    "properties": {
+      "ranger.plugin.kms.policy.rest.url": "https://master2:6182",
+      "ranger.plugin.kms.policy.cache.dir": "/etc/ranger/{{repo_name}}/policycache",
+      "ranger.plugin.kms.policy.source.impl": "org.apache.ranger.admin.client.RangerAdminRESTClient",
+      "ranger.plugin.kms.policy.pollIntervalMs": "30000",
+      "ranger.plugin.kms.policy.rest.ssl.config.file": "/etc/ranger/kms/conf/ranger-policymgr-ssl.xml",
+      "ranger.plugin.kms.service.name": "{{repo_name}}"
+    }
+  }
+},
+{
+  "dbks-site": {
+    "properties_attributes": {},
+    "properties": {
+      "ranger.ks.hsm.enabled": "false",
+      "hadoop.kms.blacklist.DECRYPT_EEK": "hdfs",
+      "ranger.ks.hsm.type": "LunaProvider",
+      "ranger.ks.jpa.jdbc.credential.alias": "ranger.ks.jdbc.password",
+      "ranger.ks.jpa.jdbc.dialect": "{{jdbc_dialect}}",
+      "ranger.ks.hsm.partition.password.alias": "ranger.kms.hsm.partition.password",
+      "ranger.ks.jpa.jdbc.url": "jdbc:postgresql://master1:5432/rangerkms",
+      "ranger.ks.jpa.jdbc.driver": "org.postgresql.Driver",
+      "ranger.ks.kerberos.keytab": "/etc/security/keytabs/rangerkms.service.keytab",
+      "ranger.ks.masterkey.credential.alias": "ranger.ks.masterkey.password",
+      "ranger.ks.hsm.partition.name": "par19",
+      "ranger.ks.jdbc.sqlconnectorjar": "{{ews_lib_jar_path}}",
+      "ranger.ks.jpa.jdbc.credential.provider.path": "/etc/ranger/kms/rangerkms.jceks",
+      "ranger.ks.jpa.jdbc.user": "{{db_user}}",
+      "ranger.ks.kerberos.principal": "rangerkms/_HOST@HORTONWORKS.COM"
+    }
+  }
+},
+{
+  "ranger-kms-audit": {
+    "properties_attributes": {},
+    "properties": {
+      "xasecure.audit.destination.hdfs.batch.filespool.dir": "/var/log/ranger/kms/audit/hdfs/spool",
+      "xasecure.audit.is.enabled": "true",
+      "xasecure.audit.jaas.Client.option.keyTab": "/etc/security/keytabs/rangerkms.service.keytab",
+      "xasecure.audit.destination.hdfs": "true",
+      "xasecure.audit.jaas.Client.loginModuleControlFlag": "required",
+      "xasecure.audit.jaas.Client.option.serviceName": "solr",
+      "xasecure.audit.jaas.Client.loginModuleName": "com.sun.security.auth.module.Krb5LoginModule",
+      "xasecure.audit.jaas.Client.option.useKeyTab": "true",
+      "xasecure.audit.destination.solr.batch.filespool.dir": "/var/log/ranger/kms/audit/solr/spool",
+      "xasecure.audit.destination.hdfs.dir": "hdfs://mycluster/ranger/audit",
+      "xasecure.audit.jaas.Client.option.principal": "rangerkms/_HOST@HORTONWORKS.COM",
+      "xasecure.audit.destination.solr.force.use.inmemory.jaas.config": "true",
+      "xasecure.audit.destination.solr": "true",
+      "xasecure.audit.destination.solr.zookeepers": "master1:2181,master2:2181,master3:2181/infra-solr",
+      "xasecure.audit.provider.summary.enabled": "false",
+      "xasecure.audit.jaas.Client.option.storeKey": "false",
+      "xasecure.audit.destination.solr.urls": ""
+    }
+  }
+},
+{
+  "ranger-kms-site": {
+    "properties_attributes": {},
+    "properties": {
+      "xa.webapp.dir": "./webapp",
+      "ranger.contextName": "/kms",
+      "ranger.service.host": "{{kms_host}}",
+      "ranger.service.shutdown.port": "7085",
+      "ranger.service.https.attrib.ssl.enabled": "false",
+      "ranger.service.https.port": "9393",
+      "ranger.service.http.port": "{{kms_port}}"
+    }
+  }
+},
+{
+  "kms-site": {
+    "properties_attributes": {},
+    "properties": {
+      "hadoop.kms.authentication.signer.secret.provider.zookeeper.kerberos.keytab": "/etc/security/keytabs/spnego.service.keytab",
+      "hadoop.kms.proxyuser.ranger.hosts": "*",
+      "hadoop.kms.authentication.type": "kerberos",
+      "hadoop.kms.key.provider.uri": "dbks://http@localhost:9292/kms",
+      "hadoop.kms.proxyuser.ranger.groups": "*",
+      "hadoop.kms.authentication.kerberos.principal": "*",
+      "hadoop.kms.cache.timeout.ms": "600000",
+      "hadoop.kms.proxyuser.ranger.users": "*",
+      "hadoop.kms.security.authorization.manager": "org.apache.ranger.authorization.kms.authorizer.RangerKmsAuthorizer",
+      "hadoop.kms.audit.aggregation.window.ms": "10000",
+      "hadoop.kms.authentication.kerberos.keytab": "/etc/security/keytabs/spnego.service.keytab",
+      "hadoop.kms.authentication.kerberos.name.rules": "RULE:[1:$1@$0](ambari-qa-hdp@HORTONWORKS.COM)s/.*/ambari-qa/\nRULE:[1:$1@$0](hdfs-hdp@HORTONWORKS.COM)s/.*/hdfs/\nRULE:[1:$1@$0](.*@HORTONWORKS.COM)s/@.*//\nRULE:[2:$1@$0](dn@HORTONWORKS.COM)s/.*/hdfs/\nRULE:[2:$1@$0](hive@HORTONWORKS.COM)s/.*/hive/\nRULE:[2:$1@$0](jhs@HORTONWORKS.COM)s/.*/mapred/\nRULE:[2:$1@$0](jn@HORTONWORKS.COM)s/.*/hdfs/\nRULE:[2:$1@$0](nm@HORTONWORKS.COM)s/.*/yarn/\nRULE:[2:$1@$0](nn@HORTONWORKS.COM)s/.*/hdfs/\nRULE:[2:$1@$0](oozie@HORTONWORKS.COM)s/.*/oozie/\nRULE:[2:$1@$0](rangeradmin@HORTONWORKS.COM)s/.*/ranger/\nRULE:[2:$1@$0](rangerkms@HORTONWORKS.COM)s/.*/keyadmin/\nRULE:[2:$1@$0](rangertagsync@HORTONWORKS.COM)s/.*/rangertagsync/\nRULE:[2:$1@$0](rangerusersync@HORTONWORKS.COM)s/.*/rangerusersync/\nRULE:[2:$1@$0](rm@HORTONWORKS.COM)s/.*/yarn/\nRULE:[2:$1@$0](yarn@HORTONWORKS.COM)s/.*/yarn/\nDEFAULT",
+      "hadoop.kms.cache.enable": "true",
+      "hadoop.kms.authentication.signer.secret.provider.zookeeper.kerberos.principal": "HTTP/_HOST@HORTONWORKS.COM",
+      "hadoop.kms.current.key.cache.timeout.ms": "30000",
+      "hadoop.kms.authentication.signer.secret.provider.zookeeper.path": "/hadoop-kms/hadoop-auth-signature-secret",
+      "hadoop.kms.authentication.signer.secret.provider.zookeeper.connection.string": "#HOSTNAME#:#PORT#,...",
+      "hadoop.kms.authentication.signer.secret.provider": "random",
+      "hadoop.kms.authentication.signer.secret.provider.zookeeper.auth.type": "kerberos"
+    }
+  }
+},
+{
+  "ranger-env": {
+    "properties_attributes": {},
+    "properties": {
+      "ranger-hive-plugin-enabled": "Yes",
+      "admin_username": "admin",
+      "ranger-hbase-plugin-enabled": "No",
+      "ranger-hdfs-plugin-enabled": "Yes",
+      "ranger_solr_config_set": "ranger_audits",
+      "xasecure.audit.destination.hdfs.dir": "hdfs://mycluster/ranger/audit",
+      "ranger_privelege_user_jdbc_url": "jdbc:postgresql://master1:5432/postgres",
+      "ranger-kafka-plugin-enabled": "No",
+      "bind_anonymous": "false",
+      "ranger_user": "ranger",
+      "is_external_solrCloud_enabled": "false",
+      "xasecure.audit.destination.solr": "true",
+      "ranger_solr_collection_name": "ranger_audits",
+      "is_external_solrCloud_kerberos": "false",
+      "ranger_group": "ranger",
+      "ranger_usersync_log_dir": "/var/log/ranger/usersync",
+      "is_solrCloud_enabled": "true",
+      "xasecure.audit.destination.hdfs": "true",
+      "ranger_admin_log_dir": "/var/log/ranger/admin",
+      "ranger-knox-plugin-enabled": "No",
+      "ranger-atlas-plugin-enabled": "No",
+      "xml_configurations_supported": "true",
+      "ranger-yarn-plugin-enabled": "Yes",
+      "ranger_solr_replication_factor": "1",
+      "ranger_admin_username": "amb_ranger_admin",
+      "ranger_solr_shards": "1",
+      "ranger_pid_dir": "/var/run/ranger",
+      "create_db_dbuser": "false",
+      "ranger-storm-plugin-enabled": "No"
+    }
+  }
+},
+{
+    "ranger-admin-site": {
+      "properties_attributes": {},
+      "properties": {
+        "ranger.admin.kerberos.cookie.path": "/",
+        "xasecure.audit.jaas.Client.option.serviceName": "solr",
+        "ranger.sso.browser.useragent": "Mozilla,chrome",
+        "xasecure.audit.jaas.Client.option.useKeyTab": "true",
+        "ranger.jpa.jdbc.driver": "org.postgresql.Driver",
+        "ranger.jpa.jdbc.url": "jdbc:postgresql://master1/ranger",
+        "ranger.jpa.jdbc.user": "ambari",
+        "ranger.jpa.jdbc.password": "DBPASSWD",
+        "ranger.service.https.attrib.keystore.file": "/etc/pki/hadoop/server.jks",
+        "ranger.admin.kerberos.cookie.domain": "{{ranger_host}}",
+        "ranger.service.http.enabled": "true",
+        "ranger.admin.kerberos.token.valid.seconds": "30",
+        "ranger.plugins.kafka.serviceuser": "kafka",
+        "ranger.plugins.atlas.serviceuser": "atlas",
+        "ranger.ldap.ad.url": "{{ranger_ug_ldap_url}}",
+        "ranger.truststore.file": "/etc/pki/hadoop/truststore.jks",
+        "ranger.audit.solr.username": "ranger_solr",
+        "ranger.lookup.kerberos.keytab": "/etc/security/keytabs/rangerlookup.service.keytab",
+        "ranger.ldap.base.dn": "dc=example,dc=com",
+        "ranger.plugins.knox.serviceuser": "knox",
+        "ranger.kms.service.user.hive": "hive",
+        "ranger.ldap.group.roleattribute": "cn",
+        "ranger.plugins.hive.serviceuser": "hive",
+        "ranger.unixauth.remote.login.enabled": "true",
+        "ranger.plugins.kms.serviceuser": "kms",
+        "ranger.authentication.method": "UNIX",
+        "ranger.ldap.user.dnpattern": "uid={0},ou=users,dc=xasecure,dc=net",
+        "xasecure.audit.jaas.Client.loginModuleControlFlag": "required",
+        "ranger.ldap.ad.bind.dn": "{{ranger_ug_ldap_bind_dn}}",
+        "ranger.ldap.group.searchfilter": "{{ranger_ug_ldap_group_searchfilter}}",
+        "ranger.service.https.attrib.ssl.enabled": "true",
+        "ranger.admin.kerberos.principal": "rangeradmin/_HOST@HORTONWORKS.COM",
+        "ranger.audit.solr.urls": "",
+        "ranger.service.https.attrib.clientAuth": "want",
+        "ranger.sso.enabled": "false",
+        "ranger.ldap.group.searchbase": "{{ranger_ug_ldap_group_searchbase}}",
+        "ranger.sso.publicKey": "",
+        "ranger.is.solr.kerberised": "{{ranger_is_solr_kerberised}}",
+        "ranger.unixauth.service.hostname": "{{ugsync_host}}",
+        "ranger.kms.service.user.hdfs": "hdfs",
+        "xasecure.audit.jaas.Client.loginModuleName": "com.sun.security.auth.module.Krb5LoginModule",
+        "ranger.plugins.storm.serviceuser": "storm",
+        "ranger.spnego.kerberos.keytab": "/etc/security/keytabs/spnego.service.keytab",
+        "ranger.service.host": "{{ranger_host}}",
+        "ranger.ldap.bind.dn": "{{ranger_ug_ldap_bind_dn}}",
+        "ranger.service.http.port": "6080",
+        "ranger.plugins.yarn.serviceuser": "yarn",
+        "ranger.ldap.url": "{{ranger_ug_ldap_url}}",
+        "ranger.unixauth.service.port": "5151",
+        "ranger.ldap.ad.base.dn": "dc=example,dc=com",
+        "ranger.ldap.referral": "ignore",
+        "ranger.service.https.attrib.keystore.keyalias": "1",
+	"ranger.service.https.attrib.keystore.pass": "DBPASSWD",
+        "ranger.ldap.ad.referral": "ignore",
+        "ranger.lookup.kerberos.principal": "rangerlookup/_HOST@HORTONWORKS.COM",
+        "ranger.spnego.kerberos.principal": "*",
+        "xasecure.audit.jaas.Client.option.keyTab": "/etc/security/keytabs/rangeradmin.service.keytab",
+        "ranger.ldap.ad.domain": "",
+        "ranger.ldap.ad.user.searchfilter": "(sAMAccountName={0})",
+        "ranger.credential.provider.path": "/etc/ranger/admin/rangeradmin.jceks",
+        "ranger.sso.providerurl": "",
+        "xasecure.audit.jaas.Client.option.principal": "rangeradmin/_HOST@HORTONWORKS.COM",
+        "ranger.ldap.user.searchfilter": "(uid={0})",
+        "ranger.plugins.hbase.serviceuser": "hbase",
+        "ranger.audit.source.type": "solr",
+        "ranger.audit.solr.zookeepers": "master1:2181,master2:2181,master3:2181/infra-solr",
+        "ranger.audit.solr.password" : "DBPASSWD",
+        "ranger.admin.kerberos.keytab": "/etc/security/keytabs/rangeradmin.service.keytab",
+        "ranger.externalurl": "{{ranger_external_url}}",
+        "ranger.plugins.hdfs.serviceuser": "hdfs",
+        "xasecure.audit.jaas.Client.option.storeKey": "false",
+        "ranger.service.https.port": "6182"
+      }
+    }
+  },
+  {
+    "ranger-tagsync-site": {
+      "properties_attributes": {},
+      "properties": {
+        "ranger.tagsync.kerberos.keytab": "/etc/security/keytabs/rangertagsync.service.keytab",
+        "ranger.tagsync.dest.ranger.ssl.config.filename": "/usr/hdp/current/ranger-tagsync/conf/mytruststore.jks",
+        "ranger.tagsync.source.atlasrest.download.interval.millis": "60000",
+        "ranger.tagsync.source.file": "false",
+        "ranger.tagsync.source.file.filename": "",
+        "ranger.tagsync.source.atlasrest.username": "admin",
+        "ranger.tagsync.source.atlasrest.endpoint": "",
+        "ranger.tagsync.keystore.filename": "/usr/hdp/current/ranger-tagsync/conf/rangertagsync.jceks",
+        "ranger.tagsync.dest.ranger.endpoint": "{{ranger_external_url}}",
+        "ranger.tagsync.dest.ranger.username": "rangertagsync",
+        "ranger.tagsync.kerberos.principal": "rangertagsync/_HOST@HORTONWORKS.COM",
+        "ranger.tagsync.source.atlas": "false",
+        "ranger.tagsync.logdir": "/var/log/ranger/tagsync",
+        "ranger.tagsync.source.atlasrest": "false",
+        "ranger.tagsync.source.atlasrest.keystore.filename": "/usr/hdp/current/ranger-tagsync/conf/atlasuser.jceks",
+        "ranger.tagsync.source.file.check.interval.millis": ""
+      }
+    }
+  },
+  {
+    "ranger-ugsync-site": {
+      "properties_attributes": {},
+      "properties": {
+        "ranger.usersync.ldap.user.groupnameattribute": "memberof, ismemberof",
+	"ranger.usersync.keystore.password" : "DBPASSWD",
+	"ranger.usersync.truststore.password" : "DBPASSWD",
+        "ranger.usersync.group.nameattribute": "",
+        "ranger.usersync.policymanager.baseURL": "{{ranger_external_url}}",
+        "ranger.usersync.ldap.bindalias": "testldapalias",
+        "ranger.usersync.kerberos.keytab": "/etc/security/keytabs/rangerusersync.service.keytab",
+        "ranger.usersync.sink.impl.class": "org.apache.ranger.unixusersync.process.PolicyMgrUserGroupBuilder",
+        "ranger.usersync.ldap.referral": "ignore",
+        "ranger.usersync.group.searchenabled": "false",
+        "ranger.usersync.pagedresultssize": "500",
+        "ranger.usersync.port": "5151",
+        "ranger.usersync.sleeptimeinmillisbetweensynccycle": "60000",
+        "ranger.usersync.ldap.bindkeystore": "",
+        "ranger.usersync.policymgr.alias": "ranger.usersync.policymgr.password",
+        "ranger.usersync.keystore.file": "/etc/pki/hadoop/server.jks",
+        "ranger.usersync.group.searchbase": "",
+        "ranger.usersync.logdir": "{{usersync_log_dir}}",
+        "ranger.usersync.unix.group.file": "/etc/group",
+        "ranger.usersync.policymgr.keystore": "/usr/hdp/current/ranger-usersync/conf/ugsync.jceks",
+        "ranger.usersync.ssl": "true",
+        "ranger.usersync.credstore.filename": "/usr/hdp/current/ranger-usersync/conf/ugsync.jceks",
+        "ranger.usersync.group.objectclass": "",
+        "ranger.usersync.group.search.first.enabled": "false",
+        "ranger.usersync.passwordvalidator.path": "./native/credValidator.uexe",
+        "ranger.usersync.ldap.url": "",
+        "ranger.usersync.unix.password.file": "/etc/passwd",
+        "ranger.usersync.group.usermapsyncenabled": "true",
+        "ranger.usersync.pagedresultsenabled": "true",
+        "ranger.usersync.unix.minUserId": "500",
+        "ranger.usersync.filesource.file": "/tmp/usergroup.txt",
+        "ranger.usersync.ldap.username.caseconversion": "none",
+        "ranger.usersync.source.impl.class": "org.apache.ranger.unixusersync.process.UnixUserGroupBuilder",
+        "ranger.usersync.group.searchfilter": "",
+        "ranger.usersync.ldap.user.nameattribute": "",
+        "ranger.usersync.ldap.groupname.caseconversion": "none",
+        "ranger.usersync.ldap.user.searchbase": "",
+        "ranger.usersync.group.searchscope": "",
+        "ranger.usersync.group.memberattributename": "",
+        "ranger.usersync.ldap.searchBase": "dc=hadoop,dc=apache,dc=org",
+        "ranger.usersync.enabled": "true",
+        "ranger.usersync.user.searchenabled": "false",
+        "ranger.usersync.kerberos.principal": "rangerusersync/_HOST@HORTONWORKS.COM",
+        "ranger.usersync.policymgr.username": "rangerusersync",
+        "ranger.usersync.ldap.binddn": "",
+        "ranger.usersync.policymanager.maxrecordsperapicall": "1000",
+        "ranger.usersync.truststore.file": "/etc/pki/hadoop/truststore.jks",
+        "ranger.usersync.ldap.user.searchscope": "sub",
+        "ranger.usersync.filesource.text.delimiter": ",",
+        "ranger.usersync.ldap.user.searchfilter": "",
+        "ranger.usersync.ldap.user.objectclass": "person",
+        "ranger.usersync.policymanager.mockrun": "false"
+      }
+    }
+  },
+  {
+    "ranger-hdfs-plugin-properties": {
+      "properties_attributes": {},
+      "properties": {
+        "REPOSITORY_CONFIG_USERNAME": "hadoop",
+        "ranger-hdfs-plugin-enabled": "Yes",
+        "common.name.for.certificate": "master2",
+        "hadoop.rpc.protection": "privacy",
+        "policy_user": "ambari-qa"
+      }
+    }
+  },
+  {
+  "ranger-hdfs-audit": {
+    "properties_attributes": {},
+    "properties": {
+      "xasecure.audit.destination.hdfs.batch.filespool.dir": "/var/log/hadoop/hdfs/audit/hdfs/spool",
+      "xasecure.audit.is.enabled": "true",
+      "xasecure.audit.jaas.Client.option.keyTab": "/etc/security/keytabs/nn.service.keytab",
+      "xasecure.audit.destination.hdfs": "true",
+      "xasecure.audit.jaas.Client.loginModuleControlFlag": "required",
+      "xasecure.audit.jaas.Client.option.serviceName": "solr",
+      "xasecure.audit.jaas.Client.loginModuleName": "com.sun.security.auth.module.Krb5LoginModule",
+      "xasecure.audit.jaas.Client.option.useKeyTab": "true",
+      "xasecure.audit.destination.solr.batch.filespool.dir": "/var/log/hadoop/hdfs/audit/solr/spool",
+      "xasecure.audit.destination.hdfs.dir": "hdfs://mycluster/ranger/audit",
+      "xasecure.audit.jaas.Client.option.principal": "nn/_HOST@HORTONWORKS.COM",
+      "xasecure.audit.destination.solr.force.use.inmemory.jaas.config": "true",
+      "xasecure.audit.destination.solr": "true",
+      "xasecure.audit.destination.solr.zookeepers": "master1:2181,master2:2181,master3:2181/infra-solr",
+      "xasecure.audit.provider.summary.enabled": "false",
+      "xasecure.audit.jaas.Client.option.storeKey": "false",
+      "xasecure.audit.destination.solr.urls": ""
+    }
+  }
+},
+{
+     "ssl-server" : {
+       "properties_attributes" : { },
+       "properties" : {
+         "ssl.server.keystore.location" : "/etc/pki/hadoop/server.jks",
+         "ssl.server.keystore.type" : "jks",
+         "ssl.server.keystore.password" : "DBPASSWD",
+         "ssl.server.keystore.keypassword" : "DBPASSWD",
+         "ssl.server.truststore.location" : "/etc/pki/hadoop/truststore.jks",
+         "ssl.server.truststore.reload.interval" : "10000",
+         "ssl.server.truststore.password" : "DBPASSWD",
+         "ssl.server.truststore.type" : "jks"
+       }
+     }
+   },
+{
+     "ssl-client" : {
+       "properties_attributes" : { },
+       "properties" : {
+         "ssl.client.truststore.location" : "/etc/pki/hadoop/truststore.jks",
+         "ssl.client.truststore.reload.interval" : "10000",
+         "ssl.client.truststore.password" : "DBPASSWD",
+         "ssl.client.truststore.type" : "jks"
+       }
+     }
+   },
+   {
+   "core-site": {
+   "properties" : {
+   "fs.defaultFS" : "hdfs://mycluster",
+   "ha.zookeeper.quorum" : "master1:2181,master2:2181,master3:2181",
+   "hadoop.rpc.protection": "privacy",
+   "hadoop.ssl.require.client.cert" : "false",
+   "hadoop.ssl.hostname.verifier" : "DEFAULT",
+   "hadoop.ssl.keystores.factory.class" : "org.apache.hadoop.security.ssl.FileBasedKeyStoresFactory",
+   "hadoop.ssl.server.conf": "ssl-server.xml",
+   "hadoop.ssl.client.conf": "ssl-client.xml",
+   "hadoop.ssl.enabled" : "true"
+   }}
+   },{
+   "yarn-site" : {
+   "properties" : {
+   "yarn.log.server.url" : "https://master3:19890/jobhistory/logs",
+   "yarn.resourcemanager.address" : "master2:8050",
+   "yarn.resourcemanager.admin.address" : "master2:8141",
+   "yarn.resourcemanager.cluster-id" : "yarn-cluster",
+   "yarn.resourcemanager.ha.automatic-failover.zk-base-path" : "/yarn-leader-election",
+   "yarn.resourcemanager.ha.enabled" : "true",
+   "yarn.resourcemanager.ha.rm-ids" : "rm1,rm2",
+   "yarn.resourcemanager.hostname" : "master2",
+   "yarn.resourcemanager.hostname.rm1" : "master2",
+   "yarn.resourcemanager.hostname.rm2" : "master3",
+   "yarn.resourcemanager.webapp.address.rm1" : "master2:8088",
+   "yarn.resourcemanager.webapp.address.rm2" : "master3:8088",
+   "yarn.resourcemanager.webapp.https.address.rm1" : "master2:8090",
+   "yarn.resourcemanager.webapp.https.address.rm2" : "master3:8090",
+   "yarn.resourcemanager.recovery.enabled" : "true",
+   "yarn.resourcemanager.resource-tracker.address" : "master2:8025",
+   "yarn.resourcemanager.scheduler.address" : "master2:8030",
+   "yarn.resourcemanager.store.class" : "org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKRMStateStore",
+   "yarn.authorization-provider": "org.apache.ranger.authorization.yarn.authorizer.RangerYarnAuthorizer",
+   "yarn.acl.enable" : "true",
+   "yarn.resourcemanager.webapp.address" : "master2:8088",
+   "yarn.resourcemanager.webapp.https.address" : "master2:8090",
+   "yarn.timeline-service.address" : "master3:10200",
+   "yarn.timeline-service.webapp.address" : "master3:8188",
+   "yarn.timeline-service.webapp.https.address" : "master3:8190",
+   "fs.defaultFS" : "hdfs://mycluster",
+   "yarn.http.policy": "HTTP_AND_HTTPS",
+   "ha.zookeeper.quorum" : "master1:2181,master2:2181,master3:2181"
+   }
+   }},
+
+      {
+        "kerberos-env": {
+          "properties_attributes" : { },
+          "properties" : {
+            "realm" : "HORTONWORKS.COM",
+            "kdc_type" : "mit-kdc",
+            "kdc_hosts" : "builder.field.hortonworks.com",
+            "admin_server_host" : "builder.field.hortonworks.com"
+          }
+        }
+      },
+      {
+        "krb5-conf": {
+          "properties_attributes" : { },
+          "properties" : {
+            "domains" : "HORTONWORKS.COM",
+            "manage_krb5_conf" : "false"
+          }
+        }
+      },
+   { "hdfs-site": {
+       "properties" : {
+         "dfs.client.failover.proxy.provider.mycluster" : "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider",
+         "dfs.ha.automatic-failover.enabled" : "true",
+         "dfs.ha.fencing.methods" : "shell(/bin/true)",
+         "dfs.ha.namenodes.mycluster" : "nn1,nn2",
+         "dfs.namenode.http-address" : "master1:50070",
+         "dfs.namenode.inode.attributes.provider.class": "org.apache.ranger.authorization.hadoop.RangerHdfsAuthorizer",
+         "dfs.https.enable" : "true",
+         "dfs.http.policy" : "HTTP_AND_HTTPS",
+         "dfs.client.https.need-auth" : "true",
+         "dfs.datanode.https.address" : "0.0.0.0:50475",
+         "dfs.namenode.http-address.mycluster.nn1" : "master1:50070",
+         "dfs.namenode.http-address.mycluster.nn2" : "master3:50070",
+         "dfs.namenode.https-address" : "master1:50470",
+         "dfs.namenode.https-address.mycluster.nn1" : "master1:50470",
+         "dfs.namenode.https-address.mycluster.nn2" : "master3:50470",
+         "dfs.namenode.rpc-address.mycluster.nn1" : "master1:8020",
+         "dfs.namenode.rpc-address.mycluster.nn2" : "master3:8020",
+         "dfs.namenode.shared.edits.dir" : "qjournal://master1:8485;master2:8485;master3:8485/mycluster",
+         "dfs.nameservices" : "mycluster",
+         "dfs.namenode.inode.attributes.provider.class" : "org.apache.ranger.authorization.hadoop.RangerHdfsAuthorizer"
+     }}
+   },
+   {
+        "oozie-site" : {
+          "properties" : {
+            "oozie.service.JPAService.jdbc.driver" : "org.postgresql.Driver",
+            "oozie.service.JPAService.jdbc.url" : "jdbc:postgresql://master1/oozie",
+            "oozie.service.JPAService.jdbc.username" : "ambari",
+            "oozie.db.schema.name" : "oozie",
+            "oozie.db.schema.create" : "true",
+            "oozie.service.JPAService.jdbc.password" : "DBPASSWD"
+          }
+        }
+      },
+      {
+        "oozie-env" : {
+          "properties" : {
+            "oozie_hostname" : "master3",
+            "oozie_database" : "Existing MySQL Database",
+            "OOZIE_HTTPS_KEYSTORE_FILE" : "/etc/pki/hadoop/server.jks",
+            "OOZIE_HTTPS_KEYSTORE_PASS" : "DBPASSWD"
+          }
+        }
+      },
+   {
+    "hive-env": {
+      "hive_ambari_database": "PostgreSQL",
+      "hive_database": "Existing PostgreSQL Database",
+      "hive_database_type": "postgres",
+      "hive_security_authorization": "Ranger"
+    }
+  },
+  {
+    "hive-site": {
+      "hive.support.concurrency": "true",
+      "hive.txn.manager": "org.apache.hadoop.hive.ql.lockmgr.DbTxnManager",
+      "hive.compactor.initiator.on": "true",
+      "hive.compactor.worker.threads": "5",
+      "javax.jdo.option.ConnectionDriverName": "org.postgresql.Driver",
+      "javax.jdo.option.ConnectionPassword": "DBPASSWD",
+      "javax.jdo.option.ConnectionURL": "jdbc:postgresql://master1/hive?createDatabaseIfNotExist=true",
+      "javax.jdo.option.ConnectionUserName": "ambari"
+    }
+  },
+
+  {
+    "ranger-hdfs-plugin-properties" : {
+      "properties_attributes" : { },
+      "properties" : {
+        "REPOSITORY_CONFIG_USERNAME" : "hadoop",
+        "ranger-hdfs-plugin-enabled" : "Yes",
+        "common.name.for.certificate" : "master2",
+        "policy_user" : "ambari-qa",
+        "hadoop.rpc.protection" : "privacy"
+      }
+    }
+  },
+  {
+       "ssl-server" : {
+         "properties_attributes" : { },
+         "properties" : {
+           "ssl.server.keystore.location" : "/etc/pki/hadoop/server.jks",
+           "ssl.server.keystore.type" : "jks",
+           "ssl.server.keystore.password" : "DBPASSWD",
+           "ssl.server.truststore.location" : "/etc/pki/hadoop/truststore.jks",
+           "ssl.server.truststore.reload.interval" : "10000",
+           "ssl.server.truststore.password" : "DBPASSWD",
+           "ssl.server.truststore.type" : "jks"
+         }
+       }
+     },
+  {
+       "ssl-client" : {
+         "properties_attributes" : { },
+         "properties" : {
+           "ssl.client.truststore.location" : "/etc/pki/hadoop/truststore.jks",
+           "ssl.client.truststore.reload.interval" : "10000",
+           "ssl.client.truststore.password" : "DBPASSWD",
+           "ssl.client.truststore.type" : "jks"
+         }
+       }
+     }
+],
+ "host_groups" : [
+   {
+      "name": "master-1",
+      "configurations": [],
+      "cardinality": "1",
+      "components": [
+        { "name": "NODEMANAGER" },
+        { "name": "HIVE_SERVER" },
+        { "name": "HIVE_METASTORE" },
+        { "name": "TEZ_CLIENT" },
+        { "name": "HDFS_CLIENT" },
+        { "name": "INFRA_SOLR_CLIENT" },
+        { "name": "ZOOKEEPER_CLIENT" },
+        { "name": "HCAT" },
+	{ "name": "PIG" },
+        { "name": "WEBHCAT_SERVER" },
+        { "name": "ZOOKEEPER_SERVER" },
+        { "name": "YARN_CLIENT" },
+        { "name": "SQOOP" },
+        { "name": "NAMENODE" },
+        { "name": "MAPREDUCE2_CLIENT" },
+        { "name": "DATANODE" },
+        { "name": "HIVE_CLIENT" },
+        { "name": "JOURNALNODE" },
+        { "name": "ZKFC" }
+ ] },
+      {
+         "name": "master-3",
+         "configurations": [],
+         "cardinality": "1",
+         "components": [
+           { "name": "NODEMANAGER" },
+           { "name": "TEZ_CLIENT" },
+           { "name": "HDFS_CLIENT" },
+           { "name": "INFRA_SOLR_CLIENT" },
+           { "name": "ZOOKEEPER_CLIENT" },
+           { "name": "ZOOKEEPER_SERVER" },
+	   { "name": "PIG" },
+           { "name": "YARN_CLIENT" },
+           { "name": "NAMENODE" },
+           { "name": "SLIDER" },
+	   { "name": "OOZIE_CLIENT" },
+           { "name": "OOZIE_SERVER" },
+           { "name": "MAPREDUCE2_CLIENT" },
+           { "name": "DATANODE" },
+           { "name": "JOURNALNODE" },
+           { "name": "ZKFC" },
+           { "name": "RESOURCEMANAGER" },
+           { "name": "APP_TIMELINE_SERVER" },
+           { "name": "HISTORYSERVER" }
+           ] },
+           {
+              "name": "master-2",
+              "configurations": [],
+              "cardinality": "1",
+              "components": [
+                { "name": "NODEMANAGER" },
+                { "name": "TEZ_CLIENT" },
+                { "name": "HDFS_CLIENT" },
+                { "name": "INFRA_SOLR_CLIENT" },
+                { "name": "ZOOKEEPER_CLIENT" },
+                { "name": "ZOOKEEPER_SERVER" },
+	        { "name": "INFRA_SOLR" },
+                { "name": "YARN_CLIENT" },
+                { "name": "RANGER_KMS_SERVER"},
+                { "name": "RANGER_USERSYNC"},
+                { "name": "RANGER_TAGSYNC"},
+		{ "name": "PIG" },
+                { "name": "RANGER_ADMIN"},
+                { "name": "MAPREDUCE2_CLIENT" },
+                { "name": "DATANODE" },
+                { "name": "JOURNALNODE" },
+                { "name": "RESOURCEMANAGER" }
+                ] }
+ ],
+ "Blueprints" : {
+ "blueprint_name" : "hdptest",
+ "stack_name" : "HDP",
+ "stack_version" : "HDPVERSION"
+ }
+}
+

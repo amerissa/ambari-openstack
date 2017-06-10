@@ -1,0 +1,212 @@
+heat_template_version: 2016-04-08
+description: Simple template to deploy a 3 node Nifi Cluster
+parameters:
+  ClusterName:
+    type: string
+    label: Cluster Name
+    description: Name of the cluster, it will also be the prefix of the hostname ie amer-1, amer-2
+    default: cluster
+  KeyName:
+      type: string
+      label: Key Name
+      description: Key Name for access
+      default: field
+  ImageID:
+    type: string
+    label: Image ID
+    description: AMI Image ID
+    default: c5203927-459b-465d-aa77-19615b51c27f
+  InstanceType:
+    type: string
+    label: Instance Type
+    description: Type of flavour
+    constraints:
+      - allowed_values: [m3.large, m3.xlarge]
+    default: m3.large
+  HDPVersion:
+    type: string
+    label: HDP Stack Version
+    description: Latest 2.4 or 2.5. 2.6 has an SSL bug 
+    constraints:
+      - allowed_values: [2.4, 2.5]
+    default: 2.5
+  DatabasePassword:
+    type: string
+    label: Postgres Database Password
+    default: bigdatahdp
+    constraints:
+      - length: { min: 8, max: 12 }
+        description: User name must be between 6 and 8 characters
+      - allowed_pattern: "[a-zA-Z0-9]*"
+        description: Letters and Numbers only
+resources:
+  AmbariMaster:
+    type: OS::Nova::Server
+    properties:
+      name:
+        list_join: ['-', [{get_param: ClusterName}, 'mstr' ]]
+      flavor: { get_param: InstanceType }
+      availability_zone: SE
+      admin_pass: "bigdata"
+      image: { get_param: ImageID }
+      key_name: { get_param: KeyName }
+      security_groups: [default]
+      networks: [{"network": PROVIDER_NET_172.26.192.0/18}]
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash
+            #setup yum and install packages
+            setenforce 0
+            curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.5.0.3/ambari.repo -o /etc/yum.repos.d/ambari.repo
+            curl -s https://mirror.go-repo.io/centos/go-repo.repo | tee /etc/yum.repos.d/go-repo.repo
+            rpm --import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
+            yum -y install postgresql postgresql-server ambari-server ambari-agent golang krb5-workstation wget git java-1.8.0-openjdk ntp bind-utils
+            ntpdate 1.north-america.pool.ntp.org
+            service ntpd start
+
+            #Fix Hostname issues
+            until ping $cluster$-1 -c 1 >/dev/null; do sleep 5; done
+              echo $(host $cluster$-1 | cut -f 4 -d " ") $cluster$-1.field.hortonworks.com >> /etc/hosts
+            until ping $cluster$-0 -c 1 >/dev/null; do sleep 5; done
+              echo $(host $cluster$-0 | cut -f 4 -d " ") $cluster$-0.field.hortonworks.com >> /etc/hosts
+            until ping $cluster$-mstr -c 1 >/dev/null; do sleep 5; done
+              echo $(host $cluster$-mstr | cut -f 4 -d " ") $cluster$-mstr.field.hortonworks.com >> /etc/hosts
+
+
+            #Generate SSL certificates and keys
+            export GOPATH=/usr/local
+            go get -u github.com/cloudflare/cfssl/cmd/...
+            mkdir -p /etc/pki/hadoop/
+            cd /etc/pki/hadoop
+            echo { \"CN\": \"$(hostname -f)\", \"key\": { \"algo\": \"rsa\", \"size\": 2048 }, \"names\": [{ \"C\": \"US\", \"L\": \"Santa Clara\", \"O\": \"Hortonworks Inc\", \"OU\": \"Professional Services\", \"ST\": \"California\" } ] } > csr.json
+            cfssl gencert -remote builder.field.hortonworks.com:8888 -hostname $(hostname -f) csr.json | cfssljson -bare server
+            wget builder.field.hortonworks.com/ca.pem
+            openssl pkcs12 -export -in server.pem -inkey server-key.pem -out server.p12 -CAfile ca.pem -passout pass:temp
+            keytool -importkeystore -srckeystore server.p12 -srcstoretype PKCS12 -srcstorepass temp -destkeystore server.jks -destkeypass $dbpasswd$ -deststorepass $dbpasswd$
+            curl http://builder.field.hortonworks.com/ca.pem -o ca.pem
+            keytool -import -file ca.pem -alias firstCA -keystore truststore.jks -storepass $dbpasswd$ -noprompt
+            openssl rsa -aes256 -in server-key.pem -out server-key.pem -passout pass:$dbpasswd$
+            keytool -keypasswd -alias 1 -new $dbpasswd$ -keystore /etc/pki/hadoop/server.jks -storepass $dbpasswd$
+            chmod +rx /etc/pki/hadoop/*
+
+            #Configure krb5
+            curl http://builder.field.hortonworks.com/krb5.conf -o /etc/krb5.conf
+
+            # Setup Psql server
+            service postgresql initdb
+            sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /var/lib/pgsql/data/postgresql.conf
+            echo "host    all             all             0.0.0.0/0            md5" >> /var/lib/pgsql/data/pg_hba.conf
+            service postgresql start
+
+            #Create Sql Database
+            su - postgres -c "psql -c \"create role ambari with login password '$dbpasswd$';\""
+            su - postgres -c "psql -c \"create database ambari with owner ambari;\""
+            su - postgres -c "psql -c \"create database ranger with owner ambari;\""
+            su - postgres -c "psql -c \"create database rangerkms with owner ambari;\""
+            su - postgres -c "psql -c \"create database oozie with owner ambari;\""
+            su - postgres -c "psql -c \"create database hive with owner ambari;\""
+            echo "*:*:*:ambari:$dbpasswd$" > ~/.pgpass
+            chmod 600 ~/.pgpass
+            psql -U ambari -h $(hostname -f) ambari -c "CREATE SCHEMA ambari; alter role ambari set search_path to 'ambari', 'public'"
+            cat /var/lib/ambari-server/resources/Ambari-DDL-Postgres-CREATE.sql | psql -U ambari -h $(hostname -f) ambari
+
+            #Ambari Setup
+            yum -y install mlocate; updatedb
+            jdbc=`locate postgresql | grep .jar`
+            ambari-server setup --jdbc-driver=/usr/lib/ambari-server/postgresql-9.3-1101-jdbc4.jar --jdbc-db=postgres
+            ambari-server setup --silent --databasehost=$(hostname -f) --database=postgres --databaseport=5432 --databasename=ambari --databaseusername=ambari --databasepassword=$dbpasswd$
+            ambari-server setup-security --security-option=setup-https --truststore-type=jks --truststore-path=/etc/pki/hadoop/truststore.jks --truststore-password=$dbpasswd$ --security-option=setup-https --import-cert-path=/etc/pki/hadoop/server.pem --import-key-path=/etc/pki/hadoop/server-key.pem --pem-password=$dbpasswd$ --api-ssl=true --api-ssl-port=8443
+            mkdir /etc/security/keytabs
+            curl http://builder.field.hortonworks.com/ambari.keytab -o /etc/security/keytabs/ambari.keytab
+            ambari-server setup-security --security-option=setup-truststore --truststore-type=jks --truststore-path=/etc/pki/hadoop/truststore.jks --truststore-password=$dbpasswd$
+            ambari-server setup-security --security-option=setup-kerberos-jaas --jaas-principal=ambari@HORTONWORKS.COM --jaas-keytab=/etc/security/keytabs/ambari.keytab
+            ambari-server setup-security --security-option=encrypt-passwords  --master-key-persist=true --master-key=$dbpasswd$
+            echo security.server.two_way_ssl = true >> /etc/ambari-server/conf/ambari.properties
+            service ambari-server start
+            sed -i "s/hostname=localhost/hostname=$(hostname -f)/g" /etc/ambari-agent/conf/ambari-agent.ini
+            service ambari-agent start
+
+            until [ `curl -k -s -H "X-Requested-By: ambari" -u admin:admin https://$(hostname -f):8443/api/v1/hosts | grep host_name | wc -l` == 3 ]; do echo Waiting for Hosts to join Ambari; sleep 15; done
+            cd /root/
+            chmod +rx /etc/pki/hadoop/*
+            chmod 755 /etc/pki/hadoop/*
+            curl http://builder.field.hortonworks.com/blueprint.json | sed 's/master1/$cluster$-mstr.field.hortonworks.com/g' | sed 's/master2/$cluster$-0.field.hortonworks.com/g' | sed 's/master3/$cluster$-1.field.hortonworks.com/g' | sed 's/DBPASSWD/$dbpasswd$/g' | sed 's/HDPVERSION/$hdpversion$/g' > blueprint.json 
+            curl http://builder.field.hortonworks.com/cluster.json | sed 's/master1/$cluster$-mstr.field.hortonworks.com/g' | sed 's/master2/$cluster$-0.field.hortonworks.com/g' | sed 's/master3/$cluster$-1.field.hortonworks.com/g' | sed 's/DBPASSWD/$dbpasswd$/g' > cluster.json
+            curl -k -H "X-Requested-By: ambari" -X POST -u admin:admin https://$(hostname -f):8443/api/v1/blueprints/hdp --data-binary @blueprint.json
+            curl -k -H "X-Requested-By: ambari" -X POST -u admin:admin https://$(hostname -f):8443/api/v1/clusters/$cluster$ --data-binary @cluster.json
+          params:
+            $dbpasswd$: {get_param: DatabasePassword}
+            $cluster$: {get_param: ClusterName}
+            $hdpversion$: {get_param: HDPVersion}
+
+  NiFi:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: 2
+      resource_def:
+        type: OS::Nova::Server
+        properties:
+          name:
+            list_join: ['-', [{get_param: ClusterName}, '%index%' ]]
+          availability_zone: SE
+          flavor: { get_param: InstanceType }
+          admin_pass: "bigdata"
+          image: { get_param: ImageID }
+          key_name: { get_param: KeyName }
+          security_groups: [default]
+          networks: [{"network": PROVIDER_NET_172.26.192.0/18}]
+          user_data:
+            str_replace:
+              template: |
+                #!/bin/bash
+                setenforce 0
+                curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.5.0.3/ambari.repo -o /etc/yum.repos.d/ambari.repo
+                curl -s https://mirror.go-repo.io/centos/go-repo.repo | tee /etc/yum.repos.d/go-repo.repo
+                rpm --import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
+                yum -y install ambari-agent golang krb5-workstation wget git java-1.8.0-openjdk ntp bind-utils
+                ntpdate 1.north-america.pool.ntp.org
+                service ntpd start
+
+                #Fix Hostname issues
+                until ping $cluster$-1 -c 1 >/dev/null; do sleep 5; done
+                  echo $(host $cluster$-1 | cut -f 4 -d " ") $cluster$-1.field.hortonworks.com >> /etc/hosts
+                until ping $cluster$-0 -c 1 >/dev/null; do sleep 5; done
+                  echo $(host $cluster$-0 | cut -f 4 -d " ") $cluster$-0.field.hortonworks.com >> /etc/hosts
+                until ping $cluster$-mstr -c 1 >/dev/null; do sleep 5; done
+                  echo $(host $cluster$-mstr | cut -f 4 -d " ") $cluster$-mstr.field.hortonworks.com >> /etc/hosts
+
+                #Generate SSL certificates and keys
+                export GOPATH=/usr/local
+                go get -u github.com/cloudflare/cfssl/cmd/...
+                mkdir -p /etc/pki/hadoop/
+                cd /etc/pki/hadoop
+                echo { \"CN\": \"$(hostname -f)\", \"key\": { \"algo\": \"rsa\", \"size\": 2048 }, \"names\": [{ \"C\": \"US\", \"L\": \"Santa Clara\", \"O\": \"Hortonworks Inc\", \"OU\": \"Professional Services\", \"ST\": \"California\" } ] } > csr.json
+                cfssl gencert -remote builder.field.hortonworks.com:8888 -hostname $(hostname -f) csr.json | cfssljson -bare server
+                wget builder.field.hortonworks.com/ca.pem
+                openssl pkcs12 -export -in server.pem -inkey server-key.pem -out server.p12 -CAfile ca.pem -passout pass:temp
+                keytool -importkeystore -srckeystore server.p12 -srcstoretype PKCS12 -srcstorepass temp -destkeystore server.jks -destkeypass $dbpasswd$ -deststorepass $dbpasswd$
+                curl http://builder.field.hortonworks.com/ca.pem -o ca.pem
+                keytool -import -file ca.pem -alias firstCA -keystore truststore.jks -storepass $dbpasswd$ -noprompt
+                openssl rsa -aes256 -in server-key.pem -out server-key.pem -passout pass:$dbpasswd$
+                keytool -keypasswd -alias 1 -new $dbpasswd$ -keystore /etc/pki/hadoop/server.jks -storepass $dbpasswd$
+                chmod +rx /etc/pki/hadoop -R
+
+
+                #Configure krb5
+                curl http://builder.field.hortonworks.com/krb5.conf -o /etc/krb5.conf
+
+                #Setup Ambari Agent
+                server=$ambariserver$.field.hortonworks.com
+                sed -i "s/hostname=localhost/hostname=$server/g" /etc/ambari-agent/conf/ambari-agent.ini
+                #until curl -k -s -H "X-Requested-By: ambari" -u admin:admin https://$server:8443 | grep -qi Ambari; do echo Waiting for Ambari-server; sleep 30; done
+                echo $(hostname -I)     $(hostname -f) >> /etc/hosts
+                chmod +x /var/lib/ambari-agent/hostname.sh
+                service ambari-agent start
+                until cat /var/log/ambari-agent/ambari-agent.log | grep -q "Connected to Ambari server"; do sleep 15; done
+              params:
+                $ambariserver$: { get_attr: [AmbariMaster, name] }
+                $cluster$: {get_param: ClusterName}
+                $dbpasswd$: {get_param: DatabasePassword}
+    depends_on: AmbariMaster
+
